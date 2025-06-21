@@ -1,0 +1,170 @@
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciador de Orçamentos, Fornecedores e Produtos</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #1a202c;
+      color: #edf2f7;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 50px 20px;
+      min-height: 100vh;
+    }
+    .container {
+      background-color: #2d3748;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+    }
+    h1 { text-align: center; margin-bottom: 30px; color: #63b3ed; }
+    label {
+      display: block;
+      margin-top: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #cbd5e0;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      background-color: #4a5568;
+      color: #edf2f7;
+    }
+    textarea { resize: vertical; }
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      background-color: #4299e1;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover { background-color: #3182ce; }
+    .output {
+      margin-top: 35px;
+      padding: 20px;
+      background-color: #1a202c;
+      border: 1px solid #4a5568;
+      border-radius: 10px;
+    }
+    hr {
+      border: 0;
+      border-top: 1px solid #4a5568;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Cadastro de Fornecedores</h1>
+    <form id="fornecedorForm">
+      <label for="nomeFantasia">Nome Fantasia</label>
+      <input type="text" id="nomeFantasia" required>
+      <label for="razaoSocial">Razão Social</label>
+      <input type="text" id="razaoSocial" required>
+      <label for="cnpj">CNPJ</label>
+      <input type="text" id="cnpj" required>
+      <label for="instituicaoSocial">Instituição Social</label>
+      <input type="text" id="instituicaoSocial">
+      <button type="submit">Salvar Fornecedor</button>
+    </form>
+
+    <h1>Cadastro de Produtos</h1>
+    <form id="produtoForm">
+      <label for="fornecedorSelect">Fornecedor</label>
+      <select id="fornecedorSelect" required></select>
+      <label for="nomeProduto">Nome do Produto</label>
+      <input type="text" id="nomeProduto" required>
+      <label for="codigoProduto">Código do Produto</label>
+      <input type="text" id="codigoProduto" required>
+      <label for="valorProduto">Valor do Produto (R$)</label>
+      <input type="number" id="valorProduto" required>
+      <label for="valorVendaProduto">Valor de Venda (R$)</label>
+      <input type="number" id="valorVendaProduto" required>
+      <label for="qtdProduto">Quantidade</label>
+      <input type="number" id="qtdProduto" required>
+      <button type="submit">Salvar Produto</button>
+    </form>
+
+    <div class="output" id="fornecedoresLista"></div>
+    <div class="output" id="produtosLista"></div>
+  </div>
+
+  <script>
+    const fornecedorForm = document.getElementById("fornecedorForm");
+    const produtoForm = document.getElementById("produtoForm");
+    const fornecedoresLista = document.getElementById("fornecedoresLista");
+    const produtosLista = document.getElementById("produtosLista");
+    const fornecedorSelect = document.getElementById("fornecedorSelect");
+
+    let fornecedores = JSON.parse(localStorage.getItem("fornecedores")) || [];
+    let produtos = JSON.parse(localStorage.getItem("produtos")) || [];
+
+    atualizarFornecedores();
+    atualizarProdutos();
+
+    fornecedorForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const novoFornecedor = {
+        id: Date.now(),
+        nomeFantasia: document.getElementById("nomeFantasia").value,
+        razaoSocial: document.getElementById("razaoSocial").value,
+        cnpj: document.getElementById("cnpj").value,
+        instituicaoSocial: document.getElementById("instituicaoSocial").value
+      };
+      fornecedores.push(novoFornecedor);
+      localStorage.setItem("fornecedores", JSON.stringify(fornecedores));
+      fornecedorForm.reset();
+      atualizarFornecedores();
+    });
+
+    produtoForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const novoProduto = {
+        id: Date.now(),
+        fornecedor_id: parseInt(fornecedorSelect.value),
+        nomeProduto: document.getElementById("nomeProduto").value,
+        codigoProduto: document.getElementById("codigoProduto").value,
+        valorProduto: document.getElementById("valorProduto").value,
+        valorVendaProduto: document.getElementById("valorVendaProduto").value,
+        qtdProduto: document.getElementById("qtdProduto").value
+      };
+      produtos.push(novoProduto);
+      localStorage.setItem("produtos", JSON.stringify(produtos));
+      produtoForm.reset();
+      atualizarProdutos();
+    });
+
+    function atualizarFornecedores() {
+      fornecedorSelect.innerHTML = '<option value="">Selecione um fornecedor</option>';
+      fornecedoresLista.innerHTML = '<h3>Fornecedores Cadastrados:</h3>';
+      fornecedores.forEach(f => {
+        fornecedorSelect.innerHTML += `<option value="${f.id}">${f.nomeFantasia}</option>`;
+        fornecedoresLista.innerHTML += `<p><strong>${f.nomeFantasia}</strong> (${f.razaoSocial}) - CNPJ: ${f.cnpj} - ${f.instituicaoSocial}</p><hr>`;
+      });
+    }
+
+    function atualizarProdutos() {
+      produtosLista.innerHTML = '<h3>Produtos Cadastrados:</h3>';
+      produtos.forEach(p => {
+        const fornecedor = fornecedores.find(f => f.id === p.fornecedor_id);
+        produtosLista.innerHTML += `<p><strong>${p.nomeProduto}</strong> (Cód: ${p.codigoProduto}) - Valor: R$ ${p.valorProduto}, Venda: R$ ${p.valorVendaProduto}, QTD: ${p.qtdProduto}<br>Fornecedor: ${fornecedor ? fornecedor.nomeFantasia : 'Desconhecido'}</p><hr>`;
+      });
+    }
+  </script>
+</body>
+</html>
